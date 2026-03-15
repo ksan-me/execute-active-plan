@@ -1,0 +1,4 @@
+interface:
+  display_name: "Execute Active Plan"
+  short_description: "Continue the active plan until a real stop condition is reached"
+  default_prompt: "Use $execute-active-plan to continue implementation from the repo docs until a real stop condition is reached."
