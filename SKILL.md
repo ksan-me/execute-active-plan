@@ -20,6 +20,7 @@ Optimize for:
 - low drift between code and docs
 - explicit stop conditions
 - safe lane-based parallel execution when defined
+- optional SubAgent delegation only when the run explicitly allows it
 
 ## Role Boundary
 
@@ -111,24 +112,25 @@ Interpret that order this way:
 10. Inspect the repository and choose the smallest useful implementation batch:
     - one unchecked task
     - or a very small cluster of directly dependent unchecked tasks
-11. Implement the required code and doc changes.
-12. Run the most relevant checks:
+11. If the user explicitly asked for subagents, delegation, or parallel agent work, decide whether any bounded sidecar task should be delegated to a SubAgent; otherwise keep execution local.
+12. Implement the required code and doc changes.
+13. Run the most relevant checks:
     - targeted checks first
     - broader checks when useful
     - if a required command cannot be inferred safely, record `TODO` and continue with other unblocked work when possible
-13. Update execution docs to match reality:
+14. Update execution docs to match reality:
     - `docs/plan.md`
     - `docs/progress.md`
     - `docs/todo.md`
     - `docs/parallel-plan.md` when lane coordination changed
     - `docs/handoff.md` when a fast resume note exists
     - `docs/current-state.md`, `docs/risk-register.md`, or `docs/verification-matrix.md` when implementation changed their truth
-14. Decide whether to continue:
+15. Decide whether to continue:
     - continue if unchecked active work remains
     - continue if any release-target keep-going condition remains true
     - continue after doc updates without asking the user for confirmation
     - stop only on a real blocker or a truly satisfied release target
-15. Repeat immediately with the next unchecked item until a real stop condition is reached.
+16. Repeat immediately with the next unchecked item until a real stop condition is reached.
 
 ## Execution Loop
 
@@ -144,6 +146,36 @@ Model the skill as a continuation loop:
 
 Do not treat this as a single-task skill. Treat it as a loop that keeps moving until a real stop condition is reached.
 
+## SubAgent Use
+
+Treat SubAgents as an optional execution accelerator, not the default mode.
+
+Use SubAgents only when all of these are true:
+- the user explicitly asked for subagents, delegation, or parallel agent work, or the current run is already operating under explicit multi-agent instructions
+- the delegated task is concrete, bounded, and materially advances the active plan
+- the delegated task is not the immediate blocking step on the critical path
+
+Prefer SubAgents for:
+- lane-owned work from `docs/parallel-plan.md` that has a clearly disjoint write surface
+- read-only repository exploration that can run in parallel with local implementation
+- focused verification or follow-up fixes that do not block the next local step
+
+Do not use SubAgents for:
+- broad or ambiguous work that still needs local scoping
+- the very next blocking task when local execution would be faster
+- duplicate investigation of the same unresolved problem
+
+When delegating:
+- give each SubAgent explicit ownership of files, modules, or surfaces
+- state that the SubAgent is not alone in the repo and must not revert others' work
+- ask for a concrete output such as changed files, findings, or a ready-to-review patch
+- keep the parent agent responsible for integration, final verification, and doc updates
+
+When `docs/parallel-plan.md` exists:
+- map one SubAgent to one lane or one disjoint slice when practical
+- use the plan as the boundary contract instead of inventing ad hoc ownership
+- record new integration or coordination needs back into execution docs when they change reality
+
 ## Execution Rules
 
 - Execute from `docs/plan.md`, not from raw idea files and not from the full backlog.
@@ -151,6 +183,7 @@ Do not treat this as a single-task skill. Treat it as a loop that keeps moving u
 - Keep work inside `docs/current-scope.md`.
 - If `docs/release-target.md` exists, keep going until it is satisfied or a hard blocker is reached.
 - If `docs/parallel-plan.md` exists, stay inside the assigned lane unless explicit integration work is documented.
+- If SubAgents are in play, keep the parent agent on the critical path and delegate only bounded sidecar work or disjoint lane work.
 - Prefer repairing stale execution docs over ignoring them.
 - Prefer repository reality over stale docs when they conflict, then update the docs.
 - Prefer narrow, verifiable batches over broad partially-finished changes.
@@ -206,6 +239,7 @@ When updating it:
 - record coordination needs instead of crossing lanes silently
 - add explicit integration tasks instead of informal overlap
 - keep it concise enough that another Codex can join the lane quickly
+- if SubAgents are used, keep lane ownership specific enough that each delegated worker can operate without guessing
 
 ## Rules for `docs/release-target.md`
 
@@ -280,6 +314,7 @@ Before finishing, verify that:
 - work was driven by `docs/plan.md`
 - active work stayed inside `docs/current-scope.md`
 - if `docs/parallel-plan.md` exists, execution stayed inside the assigned lane or explicit integration tasks
+- if SubAgents were used, each delegated task had explicit ownership and the parent agent integrated the results
 - completed work is reflected in code or docs and in `docs/progress.md` when that file exists
 - newly discovered follow-ups were moved to `docs/todo.md` instead of silently expanding scope
 - `docs/plan.md` is still short and resumable

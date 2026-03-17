@@ -1,4 +1,4 @@
 interface:
   display_name: "Execute Active Plan"
-  short_description: "実行文書を読み、計画どおりに実装を継続する"
-  default_prompt: "Use $execute-active-plan to read the repo execution docs, implement the next unchecked work, update progress docs, and keep going until a real stop condition is reached."
+  short_description: "実行文書を読み、必要ならSubAgentも使いながら計画どおりに実装を継続する"
+  default_prompt: "Use $execute-active-plan to read the repo execution docs, implement the next unchecked work, update progress docs, and keep going until a real stop condition is reached. If this run explicitly allows subagents or parallel delegation, use them only for bounded sidecar work or disjoint lanes."
